@@ -10,8 +10,7 @@ import java.util.Map;
 
 public interface ClienteService {
 
-    Mono<ClienteResponse> create(ClienteRequest clienteRequest,
-                                 Map<String, String> headers);
+    Mono<ClienteResponse> create(ClienteRequest clienteRequest);
 
     Flux<ClienteResponse> listAll();
 
@@ -19,7 +18,7 @@ public interface ClienteService {
 
     Flux<ClienteResponse> findByNombre(String nombre);
 
-    Mono<ClienteResponse> update(ClienteRequest clienteRequest, Map<String, String> headers, String id);
+    Mono<ClienteResponse> update(ClienteRequest clienteRequest, String id);
 
 
 }

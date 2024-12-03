@@ -1,14 +1,18 @@
 package com.encore.frab.reto.handler;
 
+import com.encore.frab.reto.dto.Analitica;
 import com.encore.frab.reto.dto.ClienteRequest;
 import com.encore.frab.reto.dto.ClienteResponse;
 import com.encore.frab.reto.services.ClienteService;
 import com.encore.frab.reto.services.ClienteServiceImpl;
+import com.encore.frab.reto.services.KafkaMessagePublisher;
+import com.encore.frab.reto.util.AnaliticaUtil;
 import com.encore.frab.reto.validation.ObjectValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -25,6 +29,14 @@ public class ClienteHandler {
     private final ClienteService clienteService;
 
     private final ObjectValidator objectValidator;
+
+    private final KafkaMessagePublisher kafkaMessagePublisher;
+
+    @Value("${app.region}")
+    private String region;
+
+    @Value("${app.transaccion}")
+    private String transaccion;
 
     private static final Logger LOG = LoggerFactory.getLogger(ClienteHandler.class);
 
@@ -50,11 +62,29 @@ public class ClienteHandler {
     public Mono<ServerResponse> create(ServerRequest request) {
         Mono<ClienteRequest> clientRequest = request.bodyToMono(ClienteRequest.class)
                 .doOnNext(objectValidator::validate);
+        Analitica analitica = new Analitica();
+        clientRequest.map(cli -> AnaliticaUtil.addDatosAnalitica(analitica,
+                request.headers().asHttpHeaders().asSingleValueMap(),
+                cli,
+                null,
+                region,
+                transaccion
+                ));
         return clientRequest.flatMap((cli -> ServerResponse.status(HttpStatus.CREATED)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(clienteService.create(cli,
-                        request.headers().asHttpHeaders().asSingleValueMap()
-                    ), ClienteResponse.class)
+                .body(clienteService.create(cli)
+                    .doOnNext( next -> {
+                            AnaliticaUtil.addDatosAnalitica(analitica,
+                            request.headers().asHttpHeaders().asSingleValueMap(),
+                            null,
+                            next,
+                            region,
+                            transaccion
+                            );
+                        kafkaMessagePublisher.sendEventsToTopic(analitica);
+
+                    }
+                ), ClienteResponse.class)
             )
         );
     }
@@ -65,8 +95,7 @@ public class ClienteHandler {
                                         .doOnNext(objectValidator::validate);
         return clienteRequest.flatMap((cli -> ServerResponse.ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(clienteService.update(cli, request.headers()
-                        .asHttpHeaders().asSingleValueMap(), id),
+                .body(clienteService.update(cli, id),
                         ClienteResponse.class)
             )
         );
