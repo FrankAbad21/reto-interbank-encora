@@ -30,8 +30,7 @@ public class ClienteServiceImpl implements ClienteService {
     private static final Logger LOG = LoggerFactory.getLogger(ClienteServiceImpl.class);
 
     @Override
-    public Mono<ClienteResponse> create(ClienteRequest clienteRequest,
-                                        Map<String, String> headers) {
+    public Mono<ClienteResponse> create(ClienteRequest clienteRequest) {
         LOG.info("Ingreso a service {}", clienteRequest.toString());
         Mono<Boolean> existDocumento = clienteRepository
                         .findByTipoDocumentoAndNumeroDocumento(
@@ -121,8 +120,7 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
-    public Mono<ClienteResponse> update(ClienteRequest clienteRequest,
-                                        Map<String, String> headers, String id) {
+    public Mono<ClienteResponse> update(ClienteRequest clienteRequest, String id) {
         LOG.info("Ingreso a service update {}", clienteRequest.toString());
         Mono<Cliente> clienteMono = clienteRepository.findById(id);
         Mono<Boolean> clientExistId = clienteMono.hasElement();
