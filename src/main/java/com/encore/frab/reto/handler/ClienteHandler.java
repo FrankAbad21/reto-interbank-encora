@@ -93,9 +93,29 @@ public class ClienteHandler {
         String id = request.pathVariable("id");
         Mono<ClienteRequest> clienteRequest = request.bodyToMono(ClienteRequest.class)
                                         .doOnNext(objectValidator::validate);
+        Analitica analitica = new Analitica();
+        clienteRequest.map(cli -> AnaliticaUtil.addDatosAnalitica(analitica,
+                request.headers().asHttpHeaders().asSingleValueMap(),
+                cli,
+                null,
+                region,
+                transaccion
+        ));
         return clienteRequest.flatMap((cli -> ServerResponse.ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(clienteService.update(cli, id),
+                .body(clienteService.update(cli, id)
+                    .doOnNext( next -> {
+                                AnaliticaUtil.addDatosAnalitica(analitica,
+                                        request.headers().asHttpHeaders().asSingleValueMap(),
+                                        null,
+                                        next,
+                                        region,
+                                        transaccion
+                                );
+                                kafkaMessagePublisher.sendEventsToTopic(analitica);
+
+                            }
+                    ),
                         ClienteResponse.class)
             )
         );
