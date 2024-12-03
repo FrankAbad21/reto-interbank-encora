@@ -1,9 +1,11 @@
 package com.encore.frab.reto.router;
 
+import com.encore.frab.reto.handler.ClienteHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.web.WebProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.reactive.function.server.RequestPredicates;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -12,7 +14,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 @Slf4j
 public class ClienteRouter {
 
-    private static final String PATH = "product";
+    private static final String PATH = "api/v1/cliente";
 
     @Bean
     public WebProperties.Resources resources() {
@@ -22,11 +24,11 @@ public class ClienteRouter {
     @Bean
     RouterFunction<ServerResponse> router(ClienteHandler handler) {
         return RouterFunctions.route()
-                .GET(PATH, handler::getAll)
+                .GET(PATH, RequestPredicates.queryParam("nombre", t -> true), handler::getByNombre)
+                .GET(PATH, handler::listAll)
                 .GET(PATH + "/{id}", handler::getById)
-                .POST(PATH, handler::save)
+                .POST(PATH, handler::create)
                 .PUT(PATH + "/{id}", handler::update)
-                .DELETE(PATH + "/{id}", handler::delete)
                 .build();
     }
 

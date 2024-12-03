@@ -18,10 +18,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+@Component
 @Slf4j
 public class GlobalExceptionHandler extends AbstractErrorWebExceptionHandler {
 
-    public GlobalExceptionHandler(ErrorAttributes errorAttributes, WebProperties.Resources resources, ApplicationContext applicationContext, ServerCodecConfigurer configurer) {
+    public GlobalExceptionHandler(ErrorAttributes errorAttributes,
+                                  WebProperties.Resources resources,
+                                  ApplicationContext applicationContext,
+                                  ServerCodecConfigurer configurer) {
         super(errorAttributes, resources, applicationContext);
         this.setMessageReaders(configurer.getReaders());
         this.setMessageWriters(configurer.getWriters());

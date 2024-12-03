@@ -26,69 +26,145 @@ public class ClienteServiceImpl implements ClienteService {
 
     private final ClienteRepository clienteRepository;
     private static final String DOCUMENT_MESSAGE = "Tipo de documento y numero de documento ya existe";
+    private static final String  NF_MESSAGE = "No se encuentra el cliente";
     private static final Logger LOG = LoggerFactory.getLogger(ClienteServiceImpl.class);
 
     @Override
-    public Mono<ClienteResponse> create(Mono<ClienteRequest> clienteRequest,
+    public Mono<ClienteResponse> create(ClienteRequest clienteRequest,
                                         Map<String, String> headers) {
         LOG.info("Ingreso a service {}", clienteRequest.toString());
-        Mono<Boolean> existDocumento = clienteRequest
-                .flatMap(cli -> clienteRepository
+        Mono<Boolean> existDocumento = clienteRepository
                         .findByTipoDocumentoAndNumeroDocumento(
-                                cli.getTipoDocumento(),
-                                cli.getNumeroDocumento()
-                                ).hasElement()
-        );
-        Mono<Cliente> cliente = clienteRequest
-                .map(cli -> Cliente.builder()
-                        .id(GeneradorId.generarIdDiezDigitosUnicos())
-                        .tipoDocumento(cli.getTipoDocumento())
-                        .numeroDocumento(cli.getNumeroDocumento())
-                        .nombre(cli.getNombre())
-                        .apellidoPaterno(cli.getApellidoPaterno())
-                        .apellidoMaterno(cli.getApellidoMaterno())
-                        .fechaCreacion(LocalDateTime.now())
-                        .estado(Estado.ACTIVO.toString())
-                        .build());
-        return existDocumento.flatMap(exist -> exist ?
-                Mono.error(new Exception(
-                        DOCUMENT_MESSAGE))
-                : cliente.flatMap(cli -> clienteRepository.save(cli)
-                        ).map(cl -> ClienteResponse.builder()
-                                .id(cl.getId())
-                                .tipoDocumento(cl.getTipoDocumento())
-                                .numeroDocumento(cl.getNumeroDocumento())
-                                .nombre(cl.getNombre())
-                                .apellidoPaterno(cl.getApellidoPaterno())
-                                .apellidoMaterno(cl.getApellidoMaterno())
-                                .fechaCreacion(cl.getFechaCreacion())
-                                .estado(cl.getEstado())
-                                .build()
-                        )
+                                clienteRequest.getTipoDocumento(),
+                                clienteRequest.getNumeroDocumento()
+                                ).hasElement();
+        return existDocumento.flatMap(
+            exist -> exist ?
+            Mono.error(new CustomException(HttpStatus.BAD_REQUEST,
+                DOCUMENT_MESSAGE))
+                : clienteRepository.save(Cliente.builder()
+                    .id(GeneradorId.generarIdDiezDigitosUnicos())
+                    .tipoDocumento(clienteRequest.getTipoDocumento())
+                    .numeroDocumento(clienteRequest.getNumeroDocumento())
+                    .nombre(clienteRequest.getNombre())
+                    .apellidoPaterno(clienteRequest.getApellidoPaterno())
+                    .apellidoMaterno(clienteRequest.getApellidoMaterno())
+                    .fechaCreacion(LocalDateTime.now())
+                    .estado(Estado.ACTIVO.toString())
+                    .build()
+                ).map(cl -> ClienteResponse.builder()
+                    .id(cl.getId())
+                    .tipoDocumento(cl.getTipoDocumento())
+                    .numeroDocumento(cl.getNumeroDocumento())
+                    .nombre(cl.getNombre())
+                    .apellidoPaterno(cl.getApellidoPaterno())
+                    .apellidoMaterno(cl.getApellidoMaterno())
+                    .fechaCreacion(cl.getFechaCreacion())
+                    .estado(cl.getEstado())
+                    .build()
+                )
         );
 
     }
 
     @Override
     public Flux<ClienteResponse> listAll() {
-        return null;
+        return clienteRepository.findAll()
+                .map(cl -> ClienteResponse.builder()
+                        .id(cl.getId())
+                        .tipoDocumento(cl.getTipoDocumento())
+                        .numeroDocumento(cl.getNumeroDocumento())
+                        .nombre(cl.getNombre())
+                        .apellidoPaterno(cl.getApellidoPaterno())
+                        .apellidoMaterno(cl.getApellidoMaterno())
+                        .fechaCreacion(cl.getFechaCreacion())
+                        .estado(cl.getEstado())
+                        .build()
+                );
     }
 
 
     @Override
-    public Mono<ClienteResponse> getById(int id) {
-        return null;
+    public Mono<ClienteResponse> getById(String id) {
+        return clienteRepository.findById(id)
+                .switchIfEmpty(Mono.error(
+                        new CustomException(HttpStatus.NOT_FOUND, NF_MESSAGE)))
+                .map(cl -> ClienteResponse.builder()
+                    .id(cl.getId())
+                    .tipoDocumento(cl.getTipoDocumento())
+                    .numeroDocumento(cl.getNumeroDocumento())
+                    .nombre(cl.getNombre())
+                    .apellidoPaterno(cl.getApellidoPaterno())
+                    .apellidoMaterno(cl.getApellidoMaterno())
+                    .fechaCreacion(cl.getFechaCreacion())
+                    .estado(cl.getEstado())
+                    .build()
+                );
     }
 
     @Override
     public Flux<ClienteResponse> findByNombre(String nombre) {
-        return null;
+        return clienteRepository.findByNombre(nombre)
+                .switchIfEmpty(Flux.error(
+                        new CustomException(HttpStatus.NOT_FOUND, NF_MESSAGE)))
+                .map(cl -> ClienteResponse.builder()
+                        .id(cl.getId())
+                        .tipoDocumento(cl.getTipoDocumento())
+                        .numeroDocumento(cl.getNumeroDocumento())
+                        .nombre(cl.getNombre())
+                        .apellidoPaterno(cl.getApellidoPaterno())
+                        .apellidoMaterno(cl.getApellidoMaterno())
+                        .fechaCreacion(cl.getFechaCreacion())
+                        .estado(cl.getEstado())
+                        .build()
+                );
     }
 
     @Override
     public Mono<ClienteResponse> update(ClienteRequest clienteRequest,
-                                        Map<String, String> headers, int id) {
-        return null;
+                                        Map<String, String> headers, String id) {
+        LOG.info("Ingreso a service update {}", clienteRequest.toString());
+        Mono<Cliente> clienteMono = clienteRepository.findById(id);
+        Mono<Boolean> clientExistId = clienteMono.hasElement();
+
+        Mono<Boolean> existDocumento = clienteRepository
+                .findByTipoDocumentoAndNumeroDocumento(
+                        clienteRequest.getTipoDocumento(),
+                        clienteRequest.getNumeroDocumento()
+                ).hasElement();
+        return clientExistId.flatMap(
+                existsId -> existsId ?
+                    existDocumento.flatMap(
+                        exist -> exist ?
+                            Mono.error(new CustomException(HttpStatus.BAD_REQUEST,
+                                    DOCUMENT_MESSAGE))
+                            : clienteMono.flatMap(
+                                cli -> clienteRepository.save(
+                                    Cliente.builder()
+                                    .id(id)
+                                    .tipoDocumento(clienteRequest.getTipoDocumento())
+                                    .numeroDocumento(clienteRequest.getNumeroDocumento())
+                                    .nombre(clienteRequest.getNombre())
+                                    .apellidoPaterno(clienteRequest.getApellidoPaterno())
+                                    .apellidoMaterno(clienteRequest.getApellidoMaterno())
+                                    .estado(cli.getEstado())
+                                    .fechaCreacion(cli.getFechaCreacion())
+                                    .build()
+                                )
+                        ).map(cl -> ClienteResponse.builder()
+                            .id(cl.getId())
+                            .tipoDocumento(cl.getTipoDocumento())
+                            .numeroDocumento(cl.getNumeroDocumento())
+                            .nombre(cl.getNombre())
+                            .apellidoPaterno(cl.getApellidoPaterno())
+                            .apellidoMaterno(cl.getApellidoMaterno())
+                            .fechaCreacion(cl.getFechaCreacion())
+                            .estado(cl.getEstado())
+                            .build()
+                        )
+                    )
+                : Mono.error(new CustomException(HttpStatus.NOT_FOUND, NF_MESSAGE))
+          );
     }
 
 }
