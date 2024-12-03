@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 @Accessors(chain = true)
 public class Cliente {
 
-    @MongoId(FieldType.OBJECT_ID)
     private String id;
 
     private String tipoDocumento;
