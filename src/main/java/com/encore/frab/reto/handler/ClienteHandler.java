@@ -77,10 +77,15 @@ public class ClienteHandler {
                             region,
                             transaccion
                             );
-                        kafkaMessagePublisher.sendEventsToTopic(analitica);
+
 
                     }
-                ), ClienteResponse.class)
+                ).doFinally(fin -> {anaUtil.addDatosAnalitica(analitica,
+                                request.headers().asHttpHeaders().asSingleValueMap(),
+                                null,
+                                region,
+                                transaccion
+                        );kafkaMessagePublisher.sendEventsToTopic(analitica);}), ClienteResponse.class)
             )
         );
     }
