@@ -21,4 +21,17 @@ public class ClienteResponse {
     private LocalDateTime fechaCreacion;
     private String estado;
 
+    @Override
+    public String toString() {
+        return "ClienteResponse{" +
+                "id='" + id + '\'' +
+                ", tipoDocumento='" + tipoDocumento + '\'' +
+                ", numeroDocumento='" + numeroDocumento + '\'' +
+                ", nombre='" + nombre + '\'' +
+                ", apellidoPaterno='" + apellidoPaterno + '\'' +
+                ", apellidoMaterno='" + apellidoMaterno + '\'' +
+                ", fechaCreacion=" + fechaCreacion +
+                ", estado='" + estado + '\'' +
+                '}';
+    }
 }

@@ -3,6 +3,8 @@ package com.encore.frab.reto.util;
 import com.encore.frab.reto.dto.Analitica;
 import com.encore.frab.reto.dto.ClienteRequest;
 import com.encore.frab.reto.dto.ClienteResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
@@ -14,9 +16,10 @@ public class AnaliticaUtil {
     private static final String CONSUMERID = "consumerId";
     private static final String TRACEPARENT = "traceparent";
 
-    public static Analitica addDatosAnalitica(Analitica analitica,
+    private static final Logger LOG = LoggerFactory.getLogger(AnaliticaUtil.class);
+
+    public Analitica addDatosAnalitica(Analitica analitica,
                            Map<String, String> headers,
-                           ClienteRequest clienteRequest,
                            ClienteResponse clienteResponse,
                            String region,
                            String transaccion) {
@@ -35,12 +38,17 @@ public class AnaliticaUtil {
             analitica.setStatusCode(HttpStatus.OK.toString());
             analitica.setTimestamp(clienteResponse.getFechaCreacion());
             analitica.setOutbound(clienteResponse.toString());
-        }
-
-        if (clienteRequest != null) {
-            analitica.setInbound(clienteRequest.toString());
             analitica.setRegion(region);
             analitica.setTransactionCode(transaccion);
+        }
+        return analitica;
+    }
+
+    public Analitica addDatosAnalitica(Analitica analitica,
+                                       ClienteRequest clienteRequest) {
+        LOG.info("clienteRequest {} ",clienteRequest);
+        if (clienteRequest != null) {
+            analitica.setInbound(clienteRequest.toString());
         }
         return analitica;
     }

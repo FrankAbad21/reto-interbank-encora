@@ -4,11 +4,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
-@Setter
 @Data
+@NoArgsConstructor
 public class ClienteRequest {
 
     @NotBlank
@@ -22,4 +22,14 @@ public class ClienteRequest {
     @NotNull
     private String apellidoMaterno;
 
+    @Override
+    public String toString() {
+        return "ClienteRequest{" +
+                "tipoDocumento='" + tipoDocumento + '\'' +
+                ", numeroDocumento='" + numeroDocumento + '\'' +
+                ", nombre='" + nombre + '\'' +
+                ", apellidoPaterno='" + apellidoPaterno + '\'' +
+                ", apellidoMaterno='" + apellidoMaterno + '\'' +
+                '}';
+    }
 }

@@ -5,3 +5,7 @@ spring:
   kafka:
     producer:
       bootstrap-servers: localhost:9092
+
+app:
+  region: Peru
+  transaccion: TRXCLI
